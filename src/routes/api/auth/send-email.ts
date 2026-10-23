@@ -30,8 +30,8 @@ async function handleSendEmail(request: Request): Promise<Response> {
   try {
     const payload = JSON.parse(body) as AuthEmailPayload;
     const message = buildAuthEmail(payload, {
-      from: process.env['RESEND_FROM'] || 'Option Market Traders <noreply@vastoptionmarkets.com>',
-      replyTo: process.env['RESEND_REPLY_TO'] || 'sonshasopunga@gmail.com',
+      from: process.env['RESEND_FROM'] || 'Option Market Traders <noreply@proplusebinary.com>',
+      replyTo: process.env['RESEND_REPLY_TO'] || 'domondi797@gmail.com',
       supabaseUrl,
     });
     await sendResendEmail(message, apiKey);

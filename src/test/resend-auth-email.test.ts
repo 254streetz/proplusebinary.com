@@ -10,11 +10,11 @@ describe('Resend auth email', () => {
         user: { email: 'trader@example.com' },
         email_data: { token_hash: 'hash-1', email_action_type: 'signup', redirect_to: 'https://vastoptionmarkets.com' },
       },
-      { from: 'Option Market Traders <noreply@vastoptionmarkets.com>', replyTo: 'sonshasopunga@gmail.com', supabaseUrl: 'https://kgygsfqxiwlachohktql.supabase.co/' },
+      { from: 'Option Market Traders <noreply@vastoptionmarkets.com>', replyTo: 'domondi797@gmail.com', supabaseUrl: 'https://kgygsfqxiwlachohktql.supabase.co/' },
     );
 
     expect(message.subject).toBe('Confirm your Option Market Traders account');
-    expect(message.replyTo).toBe('sonshasopunga@gmail.com');
+    expect(message.replyTo).toBe('domondi797@gmail.com');
     expect(message.text).toContain('https://kgygsfqxiwlachohktql.supabase.co/auth/v1/verify?token=hash-1&type=signup&redirect_to=https%3A%2F%2Fvastoptionmarkets.com');
   });
 
@@ -24,7 +24,7 @@ describe('Resend auth email', () => {
         user: { email: 'new@example.com' },
         email_data: { token_hash: 'old-hash', token_hash_new: 'new-hash', email_action_type: 'email_change', redirect_to: 'https://vastoptionmarkets.com' },
       },
-      { from: 'Option Market Traders <noreply@vastoptionmarkets.com>', replyTo: 'sonshasopunga@gmail.com', supabaseUrl: 'https://kgygsfqxiwlachohktql.supabase.co' },
+      { from: 'Option Market Traders <noreply@vastoptionmarkets.com>', replyTo: 'domondi797@gmail.com', supabaseUrl: 'https://kgygsfqxiwlachohktql.supabase.co' },
     );
 
     expect(message.subject).toBe('Confirm your new Option Market Traders email');
@@ -55,7 +55,7 @@ describe('Resend auth email', () => {
   it('sends through Resend with a reply-to address and does not put the API key in the body', async () => {
     const message = buildAuthEmail(
       { user: { email: 'trader@example.com' }, email_data: { token_hash: 'hash-1', email_action_type: 'signup' } },
-      { from: 'Option Market Traders <noreply@vastoptionmarkets.com>', replyTo: 'sonshasopunga@gmail.com', supabaseUrl: 'https://kgygsfqxiwlachohktql.supabase.co' },
+      { from: 'Option Market Traders <noreply@vastoptionmarkets.com>', replyTo: 'domondi797@gmail.com', supabaseUrl: 'https://kgygsfqxiwlachohktql.supabase.co' },
     );
     let captured: { authorization?: string; body?: string } = {};
     await sendResendEmail(message, 're_test_key', async (_url, init) => {
@@ -65,14 +65,14 @@ describe('Resend auth email', () => {
     });
 
     expect(captured.authorization).toBe('Bearer re_test_key');
-    expect(captured.body).toContain('"reply_to":"sonshasopunga@gmail.com"');
+    expect(captured.body).toContain('"reply_to":"domondi797@gmail.com"');
     expect(captured.body).not.toContain('re_test_key');
   });
 
   it('fails within the timeout when Resend never answers', async () => {
     const message = buildAuthEmail(
       { user: { email: 'trader@example.com' }, email_data: { token_hash: 'hash-1', email_action_type: 'signup' } },
-      { from: 'Option Market Traders <noreply@vastoptionmarkets.com>', replyTo: 'sonshasopunga@gmail.com', supabaseUrl: 'https://kgygsfqxiwlachohktql.supabase.co' },
+      { from: 'Option Market Traders <noreply@vastoptionmarkets.com>', replyTo: 'domondi797@gmail.com', supabaseUrl: 'https://kgygsfqxiwlachohktql.supabase.co' },
     );
     const started = Date.now();
 
