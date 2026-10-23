@@ -41,7 +41,7 @@ One-time setup:
 
    It creates the non-root `deploy` user with the dedicated public key, installs Docker and Caddy, configures HTTPS, opens UFW ports 22/80/443, and creates `/etc/vastoptiontraders.env` with mode 640. It disables SSH root/password login; use the web console for this first run.
 
-3. In Supabase SQL Editor, verify the existing application migrations are already applied. The live project was checked and `site_settings` is missing, so apply `drizzle/migrations/0005_site_settings.sql` once. Do not rerun the earlier table-creation migrations.
+3. In Supabase SQL Editor, verify which application migrations are already applied. For an existing database, apply only missing migrations; do not rerun earlier table-creation migrations. For a fresh database, apply the SQL files in `drizzle/migrations` in filename order. The final `0023_domondi_only_admin.sql` migration restricts automatic admin assignment to `domondi797@gmail.com`; that user must register before an admin role can be assigned.
 4. Fill `/etc/vastoptiontraders.env` on Vultr and set its owner/group to `root:docker` and mode to `640`.
 5. Add the GitHub Actions secrets and variables listed below. Verify the SSH host fingerprint shown by the Vultr console before adding a `known_hosts` entry.
 6. Run `Deploy to Vultr` from the GitHub Actions tab. The workflow tests a candidate container against `/api/health` (a read-only Supabase query), rolls back on failure, and verifies the public HTTPS endpoint.
