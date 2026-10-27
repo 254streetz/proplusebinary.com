@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react';
 export type MarketTick = { epoch: number; quote: number };
 type FeedState = { symbol: string; ticks: MarketTick[]; decimals: number; status: 'connecting' | 'live' | 'offline'; error: string; updated: number | null };
 
-const HISTORY_LENGTH = 1800;
+export const SIMULATED_HISTORY_DAYS = 7;
+export const SIMULATED_HISTORY_INTERVAL_SECONDS = 10;
+const HISTORY_SECONDS = SIMULATED_HISTORY_DAYS * 24 * 60 * 60;
 const NOISE_SCALES = [8, 45, 240, 1200, 7200, 43200] as const;
 const NOISE_WEIGHTS = [0.12, 0.18, 0.2, 0.2, 0.18, 0.12] as const;
 
@@ -47,10 +49,13 @@ export function simulatedHistory(
   volatility: number,
   precision: number,
   endEpoch: number,
-  count = HISTORY_LENGTH,
+  intervalSeconds = SIMULATED_HISTORY_INTERVAL_SECONDS,
 ): MarketTick[] {
+  const interval = Math.max(1, Math.floor(intervalSeconds));
+  const lastEpoch = Math.floor(endEpoch / interval) * interval;
+  const count = Math.floor(HISTORY_SECONDS / interval) + 1;
   return Array.from({ length: count }, (_, index) => {
-    const epoch = endEpoch - count + index + 1;
+    const epoch = lastEpoch - (count - index - 1) * interval;
     return { epoch, quote: simulatedQuote(epoch, symbol, start, volatility, precision) };
   });
 }
@@ -65,7 +70,15 @@ export function useSimulatedMarket(symbol: string, precision: number, start: num
     const id = setInterval(() => {
       const epoch = Math.floor(Date.now() / 1000);
       const tick: MarketTick = { epoch, quote: simulatedQuote(epoch, symbol, start, volatility, precision) };
-      setState(prev => ({ symbol, ticks: [...prev.ticks.filter(t => t.epoch < tick.epoch), tick].slice(-1800), decimals: precision, status: 'live', error: '', updated: tick.epoch }));
+      setState(prev => {
+        const recentCutoff = epoch - SIMULATED_HISTORY_INTERVAL_SECONDS;
+        const retained = prev.ticks.filter(t =>
+          t.epoch >= epoch - HISTORY_SECONDS &&
+          (t.epoch >= recentCutoff || t.epoch % SIMULATED_HISTORY_INTERVAL_SECONDS === 0) &&
+          t.epoch < epoch,
+        );
+        return { symbol, ticks: [...retained, tick], decimals: precision, status: 'live', error: '', updated: tick.epoch };
+      });
     }, 1000);
     return () => clearInterval(id);
   }, [symbol, precision, start, volatility]);
