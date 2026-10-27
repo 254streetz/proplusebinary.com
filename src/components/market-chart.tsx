@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import type { MarketTick } from '@/hooks/use-simulated-market';
 import type { IChartApi, ISeriesApi, Time } from 'lightweight-charts';
 
+const INITIAL_VIEW_SECONDS = 6 * 60 * 60;
+
 export function MarketChart({ ticks, decimals, symbol }: { ticks: MarketTick[]; decimals: number; symbol: string }) {
   const host = useRef<HTMLDivElement>(null);
   const chart = useRef<IChartApi | null>(null);
@@ -34,7 +36,7 @@ export function MarketChart({ ticks, decimals, symbol }: { ticks: MarketTick[]; 
         layout: { background: { type: lib.ColorType.Solid, color: token('--background') }, textColor: token('--muted-foreground'), fontFamily: css.fontFamily, fontSize: 11, attributionLogo: true },
         grid: { vertLines: { color: token('--secondary'), style: lib.LineStyle.Dotted }, horzLines: { color: token('--secondary'), style: lib.LineStyle.Dotted } },
         rightPriceScale: { borderVisible: false, scaleMargins: { top: .14, bottom: .14 } },
-        timeScale: { borderVisible: false, timeVisible: true, secondsVisible: mode === 'line', rightOffset: 8, barSpacing: mode === 'line' ? 6 : 12 },
+        timeScale: { borderVisible: false, timeVisible: true, secondsVisible: mode === 'line', rightOffset: 6, barSpacing: mode === 'line' ? 7 : 14, minBarSpacing: 4 },
         crosshair: {
           mode: lib.CrosshairMode.Normal,
           vertLine: { color: token('--muted-foreground'), style: lib.LineStyle.Dashed, labelBackgroundColor: token('--primary') },
@@ -50,7 +52,12 @@ export function MarketChart({ ticks, decimals, symbol }: { ticks: MarketTick[]; 
             topColor: up.replace(/[\d.]+\)$/, '0.28)'), bottomColor: up.replace(/[\d.]+\)$/, '0)'),
             crosshairMarkerRadius: 4, crosshairMarkerBorderColor: up,
           })
-        : api.addSeries(lib.CandlestickSeries, { upColor: up, downColor: token('--primary'), wickUpColor: up, wickDownColor: token('--primary'), borderVisible: false, priceFormat });
+        : api.addSeries(lib.CandlestickSeries, {
+            upColor: up, downColor: token('--primary'),
+            wickUpColor: up, wickDownColor: token('--primary'),
+            borderUpColor: up, borderDownColor: token('--primary'),
+            borderVisible: true, priceFormat,
+          });
       chart.current = api;
       api.subscribeCrosshairMove(point => {
         const current = series.current;
@@ -81,7 +88,16 @@ export function MarketChart({ ticks, decimals, symbol }: { ticks: MarketTick[]; 
       current.setData([...candles.values()]);
     }
     const key = `${symbol}-${mode}-${interval}-${ready}`;
-    if (fitted.current !== key) { chart.current?.timeScale().fitContent(); fitted.current = key; }
+    if (fitted.current !== key) {
+      const last = ticks[ticks.length - 1];
+      if (last) {
+        chart.current?.timeScale().setVisibleRange({
+          from: (last.epoch - INITIAL_VIEW_SECONDS) as Time,
+          to: last.epoch as Time,
+        });
+      }
+      fitted.current = key;
+    }
   }, [ticks, mode, interval, ready, symbol]);
   function zoom(factor: number) {
     const scale = chart.current?.timeScale(); const range = scale?.getVisibleLogicalRange();
@@ -89,5 +105,5 @@ export function MarketChart({ ticks, decimals, symbol }: { ticks: MarketTick[]; 
     const middle = (range.from + range.to) / 2; const half = (range.to - range.from) * factor / 2;
     scale.setVisibleLogicalRange({ from: middle - half, to: middle + half });
   }
-  return <div className="market-chart-wrap"><div className="market-chart-toolbar"><div className="chart-mode-controls"><Button variant="ghost" size="icon" aria-label="Line chart" title="Line chart" aria-pressed={mode === 'line'} onClick={() => setMode('line')}><ChartLine /></Button><Button variant="ghost" size="icon" aria-label="Candlestick chart" title="Candlestick chart" aria-pressed={mode === 'candles'} onClick={() => setMode('candles')}><CandlestickChart /></Button>{mode === 'candles' && <select aria-label="Candle interval" value={interval} onChange={e => setInterval(Number(e.target.value))}><option value={60}>1m</option><option value={300}>5m</option></select>}</div><div className="chart-mode-controls"><Button variant="ghost" size="icon" aria-label="Zoom in" title="Zoom in" onClick={() => zoom(.7)}><Plus /></Button><Button variant="ghost" size="icon" aria-label="Zoom out" title="Zoom out" onClick={() => zoom(1.4)}><Minus /></Button><Button variant="ghost" size="icon" aria-label="Fit chart" title="Fit chart" onClick={() => chart.current?.timeScale().fitContent()}><LocateFixed /></Button></div></div><div className="chart-inspection">{inspection || `${mode === 'line' ? 'Tick prices' : `${interval / 60}-minute candles`} · 7-day history · UTC`}</div><div ref={host} className="market-chart-canvas" aria-label={`${symbol} live price chart with seven-day history`} />{!ticks.length && <div className="chart-empty">Waiting for prices…</div>}</div>;
+  return <div className="market-chart-wrap"><div className="market-chart-toolbar"><div className="chart-mode-controls"><Button variant="ghost" size="icon" aria-label="Line chart" title="Line chart" aria-pressed={mode === 'line'} onClick={() => setMode('line')}><ChartLine /></Button><Button variant="ghost" size="icon" aria-label="Candlestick chart" title="Candlestick chart" aria-pressed={mode === 'candles'} onClick={() => setMode('candles')}><CandlestickChart /></Button>{mode === 'candles' && <select aria-label="Candle interval" value={interval} onChange={e => setInterval(Number(e.target.value))}><option value={60}>1m</option><option value={300}>5m</option></select>}</div><div className="chart-mode-controls"><Button variant="ghost" size="icon" aria-label="Zoom in" title="Zoom in" onClick={() => zoom(.7)}><Plus /></Button><Button variant="ghost" size="icon" aria-label="Zoom out" title="Zoom out" onClick={() => zoom(1.4)}><Minus /></Button><Button variant="ghost" size="icon" aria-label="Fit chart" title="Show full 7-day history" onClick={() => chart.current?.timeScale().fitContent()}><LocateFixed /></Button></div></div><div className="chart-inspection">{inspection || `${mode === 'line' ? 'Tick prices' : `${interval / 60}-minute candles`} · 7-day history · UTC`}</div><div ref={host} className="market-chart-canvas" aria-label={`${symbol} live price chart with seven-day history`} />{!ticks.length && <div className="chart-empty">Waiting for prices…</div>}</div>;
 }

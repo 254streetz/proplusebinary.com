@@ -470,7 +470,7 @@ button, a, input { -webkit-tap-highlight-color: transparent; }
   .market-chart-toolbar { padding: 2px 0; }
   .chart-mode-controls button { height: 28px; width: 28px; }
   .chart-inspection { min-height: 16px; padding: 0; }
-  .market-chart-canvas { height: clamp(130px, calc(100dvh - 600px), 460px); }
+  .market-chart-canvas { height: clamp(280px, 48dvh, 460px); }
   .digit-stats-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px; margin-bottom: 18px; }
   .digit-stats-heading h2 { font-size: 11px; }
   .digit-stats-heading span { font-size: 8px; }
