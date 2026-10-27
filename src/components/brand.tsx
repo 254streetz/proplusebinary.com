@@ -1,8 +1,9 @@
 import { Link } from '@tanstack/react-router';
-import { useSiteName } from '@/hooks/use-site-name';
+import { DEFAULT_SITE_NAME, useSiteName } from '@/hooks/use-site-name';
 
 export function Brand() {
-  const name = useSiteName();
+  const rawName = useSiteName();
+  const name = /option|market/i.test(rawName) ? rawName : DEFAULT_SITE_NAME;
   const lower = name.toLowerCase().replace(/\s+/g, '');
   const split = Math.max(1, Math.round(lower.length / 3));
   return (
