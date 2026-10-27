@@ -27,22 +27,22 @@ npm run dev
 
 ## Deploy to Vultr
 
-The `Deploy to Vultr` GitHub Actions workflow deploys each push to `main` to an Ubuntu Vultr VPS running Docker. For this project, the intended hostname is `vastoptionmarkets.com` and the VPS IP is `139.84.245.49`.
+The `Deploy to Vultr` GitHub Actions workflow deploys each push to `main` to an Ubuntu Vultr VPS running Docker. The intended hostname is `proplusebinary.com` and the VPS IP is `139.84.245.49`.
 
 One-time setup:
 
-1. In Cloudflare DNS, set the apex A record to `139.84.245.49`; use DNS-only while Caddy obtains its first certificate. After HTTPS works, proxying may be re-enabled with Cloudflare SSL/TLS set to Full (strict). Allow ports 22, 80, and 443 in the Vultr firewall.
+1. In Cloudflare DNS, set the `proplusebinary.com` A record to `139.84.245.49`; use DNS-only while Caddy obtains its first certificate. After HTTPS works, proxying may be re-enabled with Cloudflare SSL/TLS set to Full (strict). Allow ports 22, 80, and 443 in the Vultr firewall.
 2. Rotate any root password exposed outside the Vultr console. In the Vultr web console, download and run the bootstrap as root:
 
    ```sh
    curl -fsSLo /root/bootstrap-vultr.sh https://raw.githubusercontent.com/Sonshas/vastoptiontraders/main/scripts/bootstrap-vultr.sh
-   bash /root/bootstrap-vultr.sh vastoptionmarkets.com
+   bash /root/bootstrap-vultr.sh proplusebinary.com
    ```
 
    It creates the non-root `deploy` user with the dedicated public key, installs Docker and Caddy, configures HTTPS, opens UFW ports 22/80/443, and creates `/etc/vastoptiontraders.env` with mode 640. It disables SSH root/password login; use the web console for this first run.
 
 3. In Supabase SQL Editor, verify which application migrations are already applied. For an existing database, apply only missing migrations; do not rerun earlier table-creation migrations. For a fresh database, apply the SQL files in `drizzle/migrations` in filename order. The final `0023_domondi_only_admin.sql` migration restricts automatic admin assignment to `domondi797@gmail.com`; that user must register before an admin role can be assigned.
-4. Fill `/etc/vastoptiontraders.env` on Vultr and set its owner/group to `root:docker` and mode to `640`.
+4. Fill `/etc/vastoptiontraders.env` on Vultr with the server credentials below and set its owner/group to `root:docker` and mode to `640`.
 5. Add the GitHub Actions secrets and variables listed below. Verify the SSH host fingerprint shown by the Vultr console before adding a `known_hosts` entry.
 6. Run `Deploy to Vultr` from the GitHub Actions tab. The workflow tests a candidate container against `/api/health` (a read-only Supabase query), rolls back on failure, and verifies the public HTTPS endpoint.
 
@@ -58,7 +58,7 @@ Add these Actions variables for the client build:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
-- `VITE_MEGAPAY_KES_PER_USD`
-- `VULTR_DOMAIN`: public HTTPS hostname (for example, `vastoptionmarkets.com`)
+- `VITE_MEGAPAY_KES_PER_USD`: optional fixed exchange rate override (defaults to `130`)
+- `VULTR_DOMAIN`: public HTTPS hostname (`proplusebinary.com` by default)
 
-On the VPS, set `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `MEGAPAY_API_KEY`, and `MEGAPAY_EMAIL` in `/etc/vastoptiontraders.env`, preserving mode 640. For registration and password-reset mail, also set `RESEND_API_KEY`, `RESEND_FROM`, `RESEND_REPLY_TO`, and `SEND_EMAIL_HOOK_SECRET`. Supabase Auth must call `https://vastoptionmarkets.com/api/auth/send-email` as its Send Email hook. Replies go to `RESEND_REPLY_TO`. Do not commit `.env` or place server secrets in Actions variables. The workflow tests a candidate container against `/api/health` (which performs a read-only Supabase query), rolls back if the new release fails its health check, and verifies the public HTTPS endpoint. Database schema migrations remain a one-time Supabase setup and are not automatically applied by deployment. After setup, run the workflow manually from the Actions tab.
+On the VPS, set `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `MEGAPAY_API_KEY`, and `MEGAPAY_EMAIL=domondi797@gmail.com` in `/etc/vastoptiontraders.env`, preserving mode 640. The deployment builds with `VITE_MEGAPAY_KES_PER_USD=130` unless the optional Actions variable overrides it. For registration and password-reset mail, also set `RESEND_API_KEY`, `RESEND_FROM`, `RESEND_REPLY_TO`, and `SEND_EMAIL_HOOK_SECRET`. Set Supabase Auth's site URL and allowed redirect URLs to `https://proplusebinary.com`, and configure its Send Email hook URL as `https://proplusebinary.com/api/auth/send-email`. Replies go to `RESEND_REPLY_TO`. Do not commit `.env` or place server secrets in Actions variables. The workflow tests a candidate container against `/api/health` (which performs a read-only Supabase query), rolls back if the new release fails its health check, and verifies the public HTTPS endpoint. Database schema migrations remain a one-time Supabase setup and are not automatically applied by deployment. After setup, run the workflow manually from the Actions tab.

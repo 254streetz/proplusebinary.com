@@ -1,5 +1,5 @@
 export const REFERRAL_STORAGE_KEY = 'omt_referral_code';
-export const REFERRAL_PUBLIC_ORIGIN = 'https://vastoptionmarkets.com';
+export const REFERRAL_PUBLIC_ORIGIN = 'https://proplusebinary.com';
 const REFERRAL_CODE_PATTERN = /^[a-z0-9]{10}$/;
 
 export type ReferralDeposit = {

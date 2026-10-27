@@ -1,10 +1,10 @@
 project_id = "wmkrphgmxqxzssujeblh"
 
 [auth]
-site_url = "https://vastoptionmarkets.com"
+site_url = "https://proplusebinary.com"
 additional_redirect_urls = [
-  "https://vastoptionmarkets.com",
-  "https://vastoptionmarkets.com/**",
+  "https://proplusebinary.com",
+  "https://proplusebinary.com/**",
   "http://localhost:3000",
   "http://localhost:3000/**",
 ]
@@ -14,5 +14,5 @@ enable_confirmations = true
 
 [auth.hook.send_email]
 enabled = true
-uri = "https://vastoptionmarkets.com/api/auth/send-email"
+uri = "https://proplusebinary.com/api/auth/send-email"
 secrets = "env(SEND_EMAIL_HOOK_SECRET)"

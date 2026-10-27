@@ -6,9 +6,9 @@ if [[ "${EUID}" -ne 0 ]]; then
   exit 1
 fi
 
-app_domain="${1:-vastoptionmarkets.com}"
+app_domain="${1:-proplusebinary.com}"
 if [[ ! "${app_domain}" =~ ^[A-Za-z0-9.-]+$ ]]; then
-  echo "Pass a valid hostname, for example: $0 vastoptionmarkets.com" >&2
+  echo "Pass a valid hostname, for example: $0 proplusebinary.com" >&2
   exit 1
 fi
 
@@ -60,7 +60,7 @@ SUPABASE_URL=
 SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 MEGAPAY_API_KEY=
-MEGAPAY_EMAIL=
+MEGAPAY_EMAIL=domondi797@gmail.com
 ENV
 fi
 chown root:docker /etc/vastoptiontraders.env

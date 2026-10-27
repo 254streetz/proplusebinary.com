@@ -35,8 +35,8 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
-          VITE_MEGAPAY_KES_PER_USD: ${{ vars.VITE_MEGAPAY_KES_PER_USD }}
-          VULTR_DOMAIN: ${{ vars.VULTR_DOMAIN }}
+          VITE_MEGAPAY_KES_PER_USD: ${{ vars.VITE_MEGAPAY_KES_PER_USD || '130' }}
+          VULTR_DOMAIN: ${{ vars.VULTR_DOMAIN || 'proplusebinary.com' }}
           VULTR_HOST: "139.84.245.49"
         run: |
           test -n "$VITE_SUPABASE_URL" || { echo "Missing Actions variable VITE_SUPABASE_URL"; exit 1; }
@@ -51,7 +51,7 @@ jobs:
           NITRO_PRESET: node-server
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
-          VITE_MEGAPAY_KES_PER_USD: ${{ vars.VITE_MEGAPAY_KES_PER_USD }}
+          VITE_MEGAPAY_KES_PER_USD: ${{ vars.VITE_MEGAPAY_KES_PER_USD || '130' }}
 
       - name: Build and package container
         run: |
@@ -83,7 +83,7 @@ jobs:
         env:
           VULTR_HOST: "139.84.245.49"
           VULTR_USER: ${{ secrets.VULTR_USER }}
-          VULTR_DOMAIN: ${{ vars.VULTR_DOMAIN }}
+          VULTR_DOMAIN: ${{ vars.VULTR_DOMAIN || 'proplusebinary.com' }}
         run: |
           ssh -i "$HOME/.ssh/vultr_deploy" "$VULTR_USER@$VULTR_HOST" "bash -s -- '$GITHUB_SHA'" <<'REMOTE'
           set -euo pipefail
@@ -152,5 +152,5 @@ jobs:
 
       - name: Verify public HTTPS and database health
         env:
-          VULTR_DOMAIN: ${{ vars.VULTR_DOMAIN }}
+          VULTR_DOMAIN: ${{ vars.VULTR_DOMAIN || 'proplusebinary.com' }}
         run: curl --fail --show-error --silent --retry 12 --retry-delay 5 "https://$VULTR_DOMAIN/api/health"

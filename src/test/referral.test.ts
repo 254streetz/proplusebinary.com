@@ -39,15 +39,15 @@ describe('referral links', () => {
 
   it('builds a public referral path and omits signup metadata when there is no code', () => {
     expect(referralPath('abc1234567')).toBe('/r/abc1234567');
-    expect(referralUrl('abc1234567')).toBe('https://vastoptionmarkets.com/r/abc1234567');
-    expect(signupOptions('https://vastoptionmarkets.com', null)).toEqual({
-      emailRedirectTo: 'https://vastoptionmarkets.com',
+    expect(referralUrl('abc1234567')).toBe('https://proplusebinary.com/r/abc1234567');
+    expect(signupOptions('https://proplusebinary.com', null)).toEqual({
+      emailRedirectTo: 'https://proplusebinary.com',
     });
-    expect(signupOptions('https://vastoptionmarkets.com', 'nope')).toEqual({
-      emailRedirectTo: 'https://vastoptionmarkets.com',
+    expect(signupOptions('https://proplusebinary.com', 'nope')).toEqual({
+      emailRedirectTo: 'https://proplusebinary.com',
     });
-    expect(signupOptions('https://vastoptionmarkets.com', 'ABC1234567')).toEqual({
-      emailRedirectTo: 'https://vastoptionmarkets.com',
+    expect(signupOptions('https://proplusebinary.com', 'ABC1234567')).toEqual({
+      emailRedirectTo: 'https://proplusebinary.com',
       data: { referral_code: 'abc1234567' },
     });
   });
