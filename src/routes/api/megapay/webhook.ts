@@ -35,10 +35,10 @@ export const Route = createFileRoute('/api/megapay/webhook')({
         }
         const { transactionRequestId, reference } = megaPayCallbackFields(body);
         const { creditMegaPayDeposit } = await import('@/lib/deposit-credit.server');
-        let result = await creditMegaPayDeposit({ transactionRequestId, reference, providerResult: body });
+        let result = await creditMegaPayDeposit({ transactionRequestId, reference });
         if (result.status === 'not_found') {
           await new Promise(resolve => setTimeout(resolve, 700));
-          result = await creditMegaPayDeposit({ transactionRequestId, reference, providerResult: body });
+          result = await creditMegaPayDeposit({ transactionRequestId, reference });
         }
         return Response.json({ ok: result.ok, status: result.status });
       },

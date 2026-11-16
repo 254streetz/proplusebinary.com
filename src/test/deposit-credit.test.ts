@@ -12,32 +12,34 @@ describe('MegaPay deposit crediting', () => {
     TransactionReference: '171000',
   };
 
-  it('credits a completed payment for the requested shilling amount', () => {
+  it('credits only a completed payment with the exact requested shilling amount', () => {
     expect(megaPayPaymentState({ TransactionStatus: 'Completed', TransactionCode: '0', TransactionAmount: '1600' })).toBe('completed');
-    expect(megaPayPaymentState(webhookPaid)).toBe('completed');
+    expect(megaPayPaymentState(webhookPaid)).toBe('pending');
     expect(megaPayPaymentState({ status: 'Completed', TransactionAmount: 1600 })).toBe('completed');
     expect(megaPayPaymentState({ ResultCode: '200', data: { TransactionStatus: 'Completed', TransactionAmount: '1600' } })).toBe('completed');
     expect(canCreditDeposit(note, { TransactionStatus: 'Completed', TransactionAmount: 1600 })).toBe(true);
-    expect(canCreditDeposit(note, webhookPaid)).toBe(true);
+    expect(canCreditDeposit(note, webhookPaid)).toBe(false);
     expect(kesFromNote(note)).toBe(1600);
   });
 
   it('does not credit an accepted STK request or a smaller payment', () => {
     expect(megaPayPaymentState({ success: '200', massage: 'Request sent sucessfully.' })).toBe('pending');
     expect(megaPayPaymentState({ ResultCode: '200', ResultDesc: 'Success. Request accepted for processing' })).toBe('pending');
+    expect(megaPayPaymentState({ ResponseCode: 0, TransactionAmount: 1600 })).toBe('pending');
     expect(megaPayPaymentState({ status: '200' })).toBe('pending');
     expect(megaPayPaymentState({ ResponseCode: 1032, ResponseDescription: 'Request cancelled by user' })).toBe('failed');
     expect(canCreditDeposit(note, { TransactionStatus: 'Completed', TransactionAmount: 100 })).toBe(false);
     expect(canCreditDeposit(note, { TransactionStatus: 'Completed', TransactionAmount: 0 })).toBe(false);
+    expect(canCreditDeposit(note, { TransactionStatus: 'Completed' })).toBe(false);
+    expect(canCreditDeposit(note, { TransactionStatus: 'Completed', TransactionAmount: 1700 })).toBe(false);
     expect(canCreditDeposit(note, { success: '200' })).toBe(false);
   });
 
-  it('lets a confirmed callback complete a deposit while the status query is still ambiguous', () => {
+  it('uses the status API result to decide whether a deposit is complete', () => {
     const ambiguous = { ResultCode: '200', ResultDesc: 'Success. Request accepted for processing' };
-    expect(resolveCreditDecision(note, webhookPaid, ambiguous)).toBe('completed');
-    expect(resolveCreditDecision(note, ambiguous, { TransactionStatus: 'Completed', TransactionAmount: 1600 })).toBe('completed');
-    expect(resolveCreditDecision(note, webhookPaid, { ResponseCode: 1032 })).toBe('failed');
-    expect(resolveCreditDecision(note, { success: '200' }, ambiguous)).toBe('pending');
+    expect(resolveCreditDecision(note, ambiguous)).toBe('pending');
+    expect(resolveCreditDecision(note, { TransactionStatus: 'Completed', TransactionAmount: 1600 })).toBe('completed');
+    expect(resolveCreditDecision(note, { ResponseCode: 1032 })).toBe('failed');
     expect(megaPayCallbackFields(webhookPaid)).toEqual({ transactionRequestId: 'SOFTPID1600', reference: '171000' });
     expect(megaPayTransactionRequestId({ success: '200', data: { transaction_request_id: 'SOFTPID1600' } })).toBe('SOFTPID1600');
     expect(megaPayCallbackFields({ data: { TransactionID: 'SOFTPID1600', TransactionReference: '171000' } })).toEqual({ transactionRequestId: 'SOFTPID1600', reference: '171000' });

@@ -47,6 +47,7 @@ async function providerStatus(transactionRequestId: string): Promise<unknown> {
       transaction_request_id: transactionRequestId,
     }),
   });
+  if (!response.ok) throw new Error(`MegaPay status check failed (${response.status}).`);
   const text = await response.text();
   try { return text ? JSON.parse(text) : null; } catch { return null; }
 }
@@ -110,7 +111,6 @@ export async function creditMegaPayDeposit(input: {
   transactionRequestId?: string;
   reference?: string;
   userId?: string;
-  providerResult?: unknown;
 }): Promise<DepositCreditResult> {
   const requestedId = paymentToken(input.transactionRequestId);
   const reference = paymentToken(input.reference);
@@ -127,26 +127,17 @@ export async function creditMegaPayDeposit(input: {
   if (row.status === 'completed') return { ok: true, status: 'completed', amountUsd };
 
   const storedId = paymentToken(megapayIdFromNote(row.note) ?? '');
-  const storedRef = paymentToken(referenceFromNote(row.note) ?? '');
   const transactionRequestId = storedId || requestedId;
-  const referenceMatches = Boolean(reference && storedRef && reference === storedRef);
-  const callbackMatches = referenceMatches || !requestedId || !storedId || storedId === requestedId;
-  const provided = callbackMatches ? input.providerResult : undefined;
+  if (!transactionRequestId) return { ok: true, status: 'pending', amountUsd };
 
-  let fetched: unknown = null;
-  if (transactionRequestId) {
-    try {
-      fetched = await providerStatus(transactionRequestId);
-    } catch (error) {
-      if (!provided) {
-        return { ok: false, status: 'unavailable', message: error instanceof Error ? error.message : 'MegaPay status could not be checked.' };
-      }
-    }
-  } else if (!provided) {
-    return { ok: true, status: 'pending', amountUsd };
+  let fetched: unknown;
+  try {
+    fetched = await providerStatus(transactionRequestId);
+  } catch (error) {
+    return { ok: false, status: 'unavailable', message: error instanceof Error ? error.message : 'MegaPay status could not be checked.' };
   }
 
-  const decision = resolveCreditDecision(row.note, provided, fetched);
+  const decision = resolveCreditDecision(row.note, fetched);
   if (decision === 'failed') {
     if (row.status === 'pending') {
       await (await admin()).from('deposits').update({ status: 'rejected' }).eq('id', row.id).eq('status', 'pending');

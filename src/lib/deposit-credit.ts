@@ -47,7 +47,6 @@ export function megaPayPaymentState(result: unknown): MegaPayPaymentState {
   if (status.includes('cancel') || status.includes('fail') || status.includes('timeout') || status.includes('insufficient')) return 'failed';
   if (FAILURE_CODES.includes(codeText)) return 'failed';
   if (paidStatus(status)) return 'completed';
-  if (!status && codeText === '0') return 'completed';
   return 'pending';
 }
 
@@ -86,10 +85,10 @@ export function megaPayCallbackFields(body: unknown): { transactionRequestId: st
   };
 }
 
-/** A confirmed callback can finish a deposit while a status query is still only "request accepted". */
-export function resolveCreditDecision(note: string | null | undefined, provided: unknown, fetched: unknown): MegaPayPaymentState {
-  if (megaPayPaymentState(fetched) === 'failed' || megaPayPaymentState(provided) === 'failed') return 'failed';
-  if (canCreditDeposit(note, fetched) || canCreditDeposit(note, provided)) return 'completed';
+/** Only the authenticated MegaPay status response can complete a deposit. */
+export function resolveCreditDecision(note: string | null | undefined, fetched: unknown): MegaPayPaymentState {
+  if (megaPayPaymentState(fetched) === 'failed') return 'failed';
+  if (canCreditDeposit(note, fetched)) return 'completed';
   return 'pending';
 }
 
@@ -136,6 +135,6 @@ export function canCreditDeposit(note: string | null | undefined, providerResult
   if (megaPayPaymentState(providerResult) !== 'completed') return false;
   const expectedKes = kesFromNote(note);
   const paidKes = megaPayPaidKes(providerResult);
-  if (!Number.isFinite(expectedKes) || !Number.isFinite(paidKes)) return true;
-  return paidKes > 0 && paidKes >= expectedKes;
+  if (!Number.isFinite(expectedKes) || !Number.isFinite(paidKes)) return false;
+  return paidKes === expectedKes;
 }
